@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Combat from './Combat';
+import Combat from './combat';
 import MerchantShop from "./combat/MerchantShop.jsx";
 
 const Trail = () => {
     const navigate = useNavigate();
     const [currentPosition, setCurrentPosition] = useState('start');
     const [visitedNodes, setVisitedNodes] = useState(['start']);
-    const [playerHealth, setPlayerHealth] = useState(100);
+    const [playerHealth, setPlayerHealth] = useState(20);
     const [combatLog, setCombatLog] = useState('');
     const [showCombat, setShowCombat] = useState(false);
     const [currentEnemy, setCurrentEnemy] = useState(null);
@@ -107,9 +107,9 @@ const Trail = () => {
 
     // กำหนดศัตรูในโหนด Combat
     const enemies = [
-        { name: "Goblin", health: 30, damage: 10 },
-        { name: "Skeleton", health: 40, damage: 15 },
-        { name: "Mushroom", health: 50, damage: 20 }
+        { name: "Goblin", health: 5, damage: 3 },
+        { name: "Skeleton", health: 9, damage: 5 },
+        { name: "Mushroom", health: 15, damage: 8 }
     ];
 
     // โครงสร้างแผนที่ (เหมือนเดิม)
@@ -182,8 +182,8 @@ const Trail = () => {
             position: { x: 200, y: 200 },
             next: [],
             type: 'boss',
-            description: 'Boss Fight: Dragon',
-            enemy: { name: "Dragon", health: 200, damage: 30 }
+            description: 'Boss Fight: Boss',
+            enemy: { name: "Boss", health: 20, damage: 10 }
         },
     };
 
@@ -308,7 +308,7 @@ const Trail = () => {
             <div className="grid grid-cols-2 gap-2">
                 <div>🔥 Fire: {diceCount.fire}</div>
                 <div>💧 Water: {diceCount.water}</div>
-                <div>🌍 Earth: {diceCount.earth}</div>
+                <div>🪨 Earth: {diceCount.earth}</div>
                 <div>💨 Wind: {diceCount.wind}</div>
             </div>
         </div>

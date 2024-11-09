@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import skeleton from "../assets/skeleton.png";
 import skeletonstill from "../assets/skeletonIdle.png";
 import skeletontakehit from "../assets/skeletonTakeHit.png";
@@ -13,6 +14,221 @@ import bossAttack from "../assets/bossAttack.png";
 import bossTakeHit from "../assets/bossTakeHit.png";
 import { game_icp_backend } from 'declarations/game_icp_backend';
 
+// DiceRollUI Component
+const DiceRollUI = ({
+                        selectedCard,
+                        selectedDice,
+                        setSelectedDice,
+                        diceResults,
+                        setDiceResults,
+                        setSelectedCard,
+                        setShowDiceUI,
+                        diceCount,
+                        addToCombatLog,
+                        diceValues,
+                        applyCardEffect
+                    }) => {
+    const [hasRolled, setHasRolled] = useState(false);
+    const [isWaitingForBackend, setIsWaitingForBackend] = useState(false);
+    const [rollingDice, setRollingDice] = useState(new Set());
+    const [animatedValues, setAnimatedValues] = useState({});
+
+    // Effect for rolling animation
+    useEffect(() => {
+        let animationFrame;
+        if (rollingDice.size > 0) {
+            const animate = () => {
+                setAnimatedValues(prev => {
+                    const newValues = { ...prev };
+                    rollingDice.forEach(diceIndex => {
+                        if (!diceResults.find(r => r.diceIndex === diceIndex)) {
+                            newValues[diceIndex] = Math.floor(Math.random() * 6) + 1;
+                        }
+                    });
+                    return newValues;
+                });
+                animationFrame = requestAnimationFrame(animate);
+            };
+            animate();
+        }
+        return () => {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        };
+    }, [rollingDice, diceResults]);
+
+    const rollDice = async () => {
+        if (selectedDice.length === 0) return;
+
+        setIsWaitingForBackend(true);
+        setRollingDice(new Set(selectedDice));
+        setAnimatedValues({});
+
+        try {
+            console.log('Starting backend dice rolls...');
+
+            const rollPromises = selectedDice.map(async (diceIndex) => {
+                try {
+                    const result = await game_icp_backend.random_number();
+                    console.log(`Dice ${diceIndex + 1} backend result:`, result);
+
+                    setRollingDice(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(diceIndex);
+                        return newSet;
+                    });
+
+                    setAnimatedValues(prev => {
+                        const newValues = { ...prev };
+                        delete newValues[diceIndex];
+                        return newValues;
+                    });
+
+                    const normalizedResult = (parseInt(result) % 6) + 1;
+                    console.log(`Dice ${diceIndex + 1} normalized result:`, normalizedResult);
+
+                    return {
+                        type: selectedCard.type,
+                        roll: normalizedResult,
+                        diceIndex
+                    };
+                } catch (error) {
+                    console.error(`Error rolling dice ${diceIndex + 1}:`, error);
+                    throw error;
+                }
+            });
+
+            const finalResults = await Promise.all(rollPromises);
+            console.log('All dice rolls completed:', finalResults);
+
+            setDiceResults(finalResults);
+            setHasRolled(true);
+
+        } catch (error) {
+            console.error('Fatal error in dice rolling:', error);
+            addToCombatLog('Error rolling dice. Please try again.');
+            setSelectedDice([]);
+        } finally {
+            setIsWaitingForBackend(false);
+            setRollingDice(new Set());
+            setAnimatedValues({});
+        }
+    };
+
+    const DiceDisplay = ({ index, isRolling, finalValue }) => {
+        const currentValue = isRolling ? animatedValues[index] : finalValue;
+        const result = diceResults.find(r => r.diceIndex === index);
+
+        return (
+            <div className={`p-4 rounded-lg ${
+                result ? 'bg-blue-600' :
+                    isRolling ? 'bg-yellow-600 animate-pulse' :
+                        selectedDice.includes(index) ? 'bg-blue-600' : 'bg-gray-600'
+            }`}>
+                <div className="flex flex-col items-center justify-center gap-2">
+                    <span>{selectedCard?.type} Dice {index + 1}</span>
+                    {(isRolling || result) && (
+                        <div className="text-2xl font-bold">
+                            {result ? result.roll : currentValue}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-8 rounded-lg max-w-xl w-full">
+                <h2 className="text-xl text-white mb-4">
+                    Select dice to roll for {selectedCard?.name}
+                </h2>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    {Array(diceCount[selectedCard?.type])
+                        .fill(0)
+                        .map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => {
+                                    if (!hasRolled && !isWaitingForBackend) {
+                                        if (selectedDice.includes(index)) {
+                                            setSelectedDice(prev => prev.filter(d => d !== index));
+                                        } else {
+                                            setSelectedDice(prev => [...prev, index]);
+                                        }
+                                    }
+                                }}
+                                disabled={hasRolled || isWaitingForBackend}
+                                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <DiceDisplay
+                                    index={index}
+                                    isRolling={rollingDice.has(index)}
+                                    finalValue={diceResults.find(r => r.diceIndex === index)?.roll}
+                                />
+                            </button>
+                        ))}
+                </div>
+
+                {!hasRolled && diceResults.length === 0 && (
+                    <div className="flex justify-between">
+                        <button
+                            onClick={() => {
+                                setSelectedCard(null);
+                                setSelectedDice([]);
+                                setDiceResults([]);
+                                setShowDiceUI(false);
+                            }}
+                            className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
+                            disabled={isWaitingForBackend}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={rollDice}
+                            disabled={selectedDice.length === 0 || isWaitingForBackend}
+                            className={`px-6 py-2 rounded-lg flex items-center gap-2 ${
+                                selectedDice.length > 0 && !isWaitingForBackend
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-600 text-gray-400'
+                            }`}
+                        >
+                            {isWaitingForBackend && <Loader2 className="animate-spin" size={16} />}
+                            {isWaitingForBackend ? 'Rolling...' : 'Roll Dice'}
+                        </button>
+                    </div>
+                )}
+
+                {diceResults.length > 0 && (
+                    <div className="text-center text-white">
+                        <div className="border-t border-gray-600 pt-4 mt-4">
+                            <div className={`text-xl ${
+                                selectedCard?.type === 'fire' ? 'text-red-400' :
+                                    selectedCard?.type === 'water' ? 'text-blue-400' :
+                                        selectedCard?.type === 'earth' ? 'text-green-400' :
+                                            'text-purple-400'
+                            }`}>
+                                {selectedCard?.type === 'fire' && `Total Damage: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                {selectedCard?.type === 'water' && `Total Heal: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                {selectedCard?.type === 'earth' && `Total Barrier: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                {selectedCard?.type === 'wind' && `Cards to Draw: ${diceResults.reduce((sum, result) =>
+                                    sum + diceValues[result.type][result.roll - 1], 0)}`}
+                            </div>
+                            <button
+                                onClick={() => applyCardEffect(selectedCard, diceResults)}
+                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg mt-4"
+                            >
+                                Apply Effect
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) => {
     const [playerHealth, setPlayerHealth] = useState(20);
@@ -28,15 +244,6 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
     const [isRolling, setIsRolling] = useState(false);
     const [showDiceUI, setShowDiceUI] = useState(false);
     const [combatLog, setCombatLog] = useState([]);
-    const [rullNum, setRullNum] = useState(0);
-
-    const f_roll = () => {
-        game_icp_backend.random_number().then((resultNumRoll) => {
-            console.log(resultNumRoll)
-            setRullNum(resultNumRoll);
-        })
-        return rullNum;
-    }
 
     // Animation states
     const [spriteFrame, setSpriteFrame] = useState(0);
@@ -114,13 +321,12 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                 frameHeight: 150,
                 duration: 150
             },
-
-        takehit: {
-            spritesheet: skeletontakehit,
-            frames: 4,
-            frameWidth: 150,
-            frameHeight: 150,
-            duration: 200
+            takehit: {
+                spritesheet: skeletontakehit,
+                frames: 4,
+                frameWidth: 150,
+                frameHeight: 150,
+                duration: 200
             }
         },
         mushroom: {
@@ -173,8 +379,7 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
             const idleConfig = animations[currentEnemy].idle;
             animationTimer = setInterval(() => {
                 setSpriteFrame(prev => (prev + 1) % idleConfig.frames);
-            }, idleConfig.duration);
-        }
+            }, idleConfig.duration);}
 
         return () => {
             if (animationTimer) {
@@ -189,7 +394,6 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
         setIsAnimating(true);
         setSpriteFrame(0);
     };
-
 
     // เริ่มต้นเทิร์น
     const startTurn = () => {
@@ -254,10 +458,11 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
     const selectCard = (card) => {
         if (!isPlayerTurn) return;
         setSelectedCard(card);
-        setSelectedDice([]); // Reset selected dice
-        setDiceResults([]); // Reset dice results
+        setSelectedDice([]);
+        setDiceResults([]);
         setShowDiceUI(true);
     };
+
     // Enemy turn logic
     const enemyTurn = () => {
         playAnimation('attack');
@@ -293,7 +498,7 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
 
             case 'water':
                 const healing = results.reduce((sum, result) => sum + result.roll, 0);
-                setPlayerHealth(prev => Math.min(20, prev + healing)); // เปลี่ยนจาก 100 เป็น 20
+                setPlayerHealth(prev => Math.min(20, prev + healing));
                 addToCombatLog(`You heal for ${healing} HP!`);
                 break;
 
@@ -304,7 +509,6 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                 break;
 
             case 'wind':
-                // wind ยังคงใช้ค่าจาก diceValues เหมือนเดิม
                 const cardsToDraw = results.reduce((sum, result) =>
                     sum + diceValues[result.type][result.roll - 1], 0
                 );
@@ -319,161 +523,6 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
         setSelectedDice([]);
         setDiceResults([]);
         setShowDiceUI(false);
-    };
-
-    // DiceRollUI component
-    // ส่วนของ DiceRollUI component ที่ต้องแก้
-    // แก้ไข DiceRollUI component
-    const DiceRollUI = () => {
-        const [hasRolled, setHasRolled] = useState(false);
-        const [isWaitingForBackend, setIsWaitingForBackend] = useState(false);
-
-        const rollDice = async () => {
-            if (selectedDice.length === 0) return;
-
-            setIsWaitingForBackend(true);
-            setIsRolling(true);
-
-            try {
-                // Log the start of backend calls
-                console.log('Starting backend dice rolls...');
-
-                // Create an array of promises for each dice roll
-                const rollPromises = selectedDice.map(async (diceIndex) => {
-                    try {
-                        const result = await game_icp_backend.random_number();
-                        console.log(`Dice ${diceIndex + 1} backend result:`, result);
-
-                        // Convert result to number between 1-6
-                        const normalizedResult = (parseInt(result) % 6) + 1;
-                        console.log(`Dice ${diceIndex + 1} normalized result:`, normalizedResult);
-
-                        return {
-                            type: selectedCard.type,
-                            roll: normalizedResult,
-                            diceIndex
-                        };
-                    } catch (error) {
-                        console.error(`Error rolling dice ${diceIndex + 1}:`, error);
-                        throw error;
-                    }
-                });
-
-                // Wait for all dice rolls to complete
-                const finalResults = await Promise.all(rollPromises);
-                console.log('All dice rolls completed:', finalResults);
-
-                setDiceResults(finalResults);
-                setHasRolled(true);
-
-            } catch (error) {
-                console.error('Fatal error in dice rolling:', error);
-                addToCombatLog('Error rolling dice. Please try again.');
-                setSelectedDice([]);
-            } finally {
-                setIsRolling(false);
-                setIsWaitingForBackend(false);
-            }
-        };
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-gray-800 p-8 rounded-lg max-w-xl w-full">
-                    <h2 className="text-xl text-white mb-4">Select dice to roll for {selectedCard?.name}</h2>
-
-                    {/* Dice selection grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        {Array(diceCount[selectedCard?.type])
-                            .fill(0)
-                            .map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => {
-                                        if (!hasRolled && !isWaitingForBackend) {
-                                            if (selectedDice.includes(index)) {
-                                                setSelectedDice(prev => prev.filter(d => d !== index));
-                                            } else {
-                                                setSelectedDice(prev => [...prev, index]);
-                                            }
-                                        }
-                                    }}
-                                    className={`p-4 rounded-lg ${
-                                        selectedDice.includes(index)
-                                            ? 'bg-blue-600'
-                                            : 'bg-gray-600'
-                                    } ${(hasRolled || isWaitingForBackend) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    disabled={hasRolled || isWaitingForBackend}
-                                >
-                                    {selectedCard?.type} Dice {index + 1}
-                                </button>
-                            ))}
-                    </div>
-
-                    {/* Control buttons */}
-                    {!hasRolled && diceResults.length === 0 && (
-                        <div className="flex justify-between">
-                            <button
-                                onClick={() => {
-                                    setSelectedCard(null);
-                                    setSelectedDice([]);
-                                    setDiceResults([]);
-                                    setShowDiceUI(false);
-                                }}
-                                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
-                                disabled={isWaitingForBackend}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={rollDice}
-                                disabled={selectedDice.length === 0 || isWaitingForBackend}
-                                className={`px-6 py-2 rounded-lg ${
-                                    selectedDice.length > 0 && !isWaitingForBackend
-                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                        : 'bg-gray-600 text-gray-400'
-                                }`}
-                            >
-                                {isWaitingForBackend ? 'Rolling...' : 'Roll Dice'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Results display */}
-                    {diceResults.length > 0 && (
-                        <div className="text-center text-white">
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                {diceResults.map((result) => (
-                                    <div key={result.diceIndex} className="bg-gray-700 p-4 rounded-lg">
-                                        <div className="text-lg">Dice {result.diceIndex + 1}</div>
-                                        <div className="text-2xl font-bold">Roll: {result.roll}/6</div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="border-t border-gray-600 pt-4 mt-4">
-                                {/* Results summary based on card type */}
-                                <div className={`text-xl ${
-                                    selectedCard?.type === 'fire' ? 'text-red-400' :
-                                        selectedCard?.type === 'water' ? 'text-blue-400' :
-                                            selectedCard?.type === 'earth' ? 'text-green-400' :
-                                                'text-purple-400'
-                                }`}>
-                                    {selectedCard?.type === 'fire' && `Total Damage: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
-                                    {selectedCard?.type === 'water' && `Total Heal: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
-                                    {selectedCard?.type === 'earth' && `Total Barrier: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
-                                    {selectedCard?.type === 'wind' && `Cards to Draw: ${diceResults.reduce((sum, result) =>
-                                        sum + diceValues[result.type][result.roll - 1], 0)}`}
-                                </div>
-                                <button
-                                    onClick={() => applyCardEffect(selectedCard, diceResults)}
-                                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg mt-4"
-                                >
-                                    Apply Effect
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
     };
 
     // Effect to start turn
@@ -623,7 +672,21 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                 )}
 
                 {/* Dice Roll UI */}
-                {showDiceUI && <DiceRollUI />}
+                {showDiceUI && (
+                    <DiceRollUI
+                        selectedCard={selectedCard}
+                        selectedDice={selectedDice}
+                        setSelectedDice={setSelectedDice}
+                        diceResults={diceResults}
+                        setDiceResults={setDiceResults}
+                        setSelectedCard={setSelectedCard}
+                        setShowDiceUI={setShowDiceUI}
+                        diceCount={diceCount}
+                        addToCombatLog={addToCombatLog}
+                        diceValues={diceValues}
+                        applyCardEffect={applyCardEffect}
+                    />
+                )}
             </div>
         </div>
     );

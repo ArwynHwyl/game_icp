@@ -3,16 +3,28 @@
     "node": ">=16.0.0",
     "npm": ">=7.0.0"
   },
-  "name": "game_icp",
+  "name": "icp_project",
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
     "prebuild": "npm run prebuild --workspaces --if-present",
     "pretest": "npm run prebuild --workspaces --if-present",
     "start": "npm start --workspaces --if-present",
+    "build:css": "tailwindcss -i ./src/game_icp_frontend/src/index.css -o ./src/game_icp_frontend/src/styles.css --watch",
+    "dev": "npm run dev --workspace src/game_icp_frontend",
+    "build": "npm run build:css && npm run build --workspaces --if-present",
     "test": "npm test --workspaces --if-present"
   },
   "type": "module",
   "workspaces": [
     "src/game_icp_frontend"
-  ]
+  ],
+  "dependencies": {
+    "lucide-react": "^0.454.0",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^2.13.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14"
+  }
 }

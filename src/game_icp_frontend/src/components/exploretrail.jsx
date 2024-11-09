@@ -319,7 +319,6 @@ const Trail = () => {
             <div className="relative w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
                 {/* Player Status */}
                 <div className="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg">
-                    <div className="mb-2">HP: {playerHealth}/100</div>
                     <div className="mb-2">{combatLog}</div>
                 </div>
 

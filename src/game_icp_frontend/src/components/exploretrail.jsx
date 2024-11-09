@@ -303,7 +303,7 @@ const Trail = () => {
 
     // แสดงข้อมูลลูกเต๋า
     const DiceInfo = () => (
-        <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg">
+        <div className="absolute bottom-20 left-4 bg-white p-4 rounded-lg shadow-lg">
             <div className="font-bold mb-2">Dice Count:</div>
             <div className="grid grid-cols-2 gap-2">
                 <div>🔥 Fire: {diceCount.fire}</div>
@@ -319,6 +319,7 @@ const Trail = () => {
             <div className="relative w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
                 {/* Player Status */}
                 <div className="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg">
+                    <div className="mb-2">Explore trail!</div>
                     <div className="mb-2">{combatLog}</div>
                 </div>
 

@@ -11,6 +11,8 @@ import mushroomtakehit from "../assets/mushroomTakeHit.png";
 import bossIdle from "../assets/bossIdle.png";
 import bossAttack from "../assets/bossAttack.png";
 import bossTakeHit from "../assets/bossTakeHit.png";
+import { game_icp_backend } from 'declarations/game_icp_backend';
+
 
 const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) => {
     const [playerHealth, setPlayerHealth] = useState(20);
@@ -26,6 +28,15 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
     const [isRolling, setIsRolling] = useState(false);
     const [showDiceUI, setShowDiceUI] = useState(false);
     const [combatLog, setCombatLog] = useState([]);
+    const [rullNum, setRullNum] = useState(0);
+
+    const f_roll = () => {
+        game_icp_backend.random_number().then((resultNumRoll) => {
+            console.log(resultNumRoll)
+            setRullNum(resultNumRoll);
+        })
+        return rullNum;
+    }
 
     // Animation states
     const [spriteFrame, setSpriteFrame] = useState(0);
@@ -315,13 +326,61 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
     // แก้ไข DiceRollUI component
     const DiceRollUI = () => {
         const [hasRolled, setHasRolled] = useState(false);
+        const [isWaitingForBackend, setIsWaitingForBackend] = useState(false);
 
+        const rollDice = async () => {
+            if (selectedDice.length === 0) return;
+
+            setIsWaitingForBackend(true);
+            setIsRolling(true);
+
+            try {
+                // Log the start of backend calls
+                console.log('Starting backend dice rolls...');
+
+                // Create an array of promises for each dice roll
+                const rollPromises = selectedDice.map(async (diceIndex) => {
+                    try {
+                        const result = await game_icp_backend.random_number();
+                        console.log(`Dice ${diceIndex + 1} backend result:`, result);
+
+                        // Convert result to number between 1-6
+                        const normalizedResult = (parseInt(result) % 6) + 1;
+                        console.log(`Dice ${diceIndex + 1} normalized result:`, normalizedResult);
+
+                        return {
+                            type: selectedCard.type,
+                            roll: normalizedResult,
+                            diceIndex
+                        };
+                    } catch (error) {
+                        console.error(`Error rolling dice ${diceIndex + 1}:`, error);
+                        throw error;
+                    }
+                });
+
+                // Wait for all dice rolls to complete
+                const finalResults = await Promise.all(rollPromises);
+                console.log('All dice rolls completed:', finalResults);
+
+                setDiceResults(finalResults);
+                setHasRolled(true);
+
+            } catch (error) {
+                console.error('Fatal error in dice rolling:', error);
+                addToCombatLog('Error rolling dice. Please try again.');
+                setSelectedDice([]);
+            } finally {
+                setIsRolling(false);
+                setIsWaitingForBackend(false);
+            }
+        };
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-gray-800 p-8 rounded-lg max-w-xl w-full">
                     <h2 className="text-xl text-white mb-4">Select dice to roll for {selectedCard?.name}</h2>
 
-                    {/* แสดงลูกเต๋าให้เลือก */}
+                    {/* Dice selection grid */}
                     <div className="grid grid-cols-2 gap-4 mb-6">
                         {Array(diceCount[selectedCard?.type])
                             .fill(0)
@@ -329,7 +388,7 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                                 <button
                                     key={index}
                                     onClick={() => {
-                                        if (!hasRolled) {
+                                        if (!hasRolled && !isWaitingForBackend) {
                                             if (selectedDice.includes(index)) {
                                                 setSelectedDice(prev => prev.filter(d => d !== index));
                                             } else {
@@ -341,14 +400,15 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                                         selectedDice.includes(index)
                                             ? 'bg-blue-600'
                                             : 'bg-gray-600'
-                                    } ${hasRolled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    disabled={hasRolled}
+                                    } ${(hasRolled || isWaitingForBackend) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={hasRolled || isWaitingForBackend}
                                 >
                                     {selectedCard?.type} Dice {index + 1}
                                 </button>
                             ))}
                     </div>
 
+                    {/* Control buttons */}
                     {!hasRolled && diceResults.length === 0 && (
                         <div className="flex justify-between">
                             <button
@@ -359,50 +419,27 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                                     setShowDiceUI(false);
                                 }}
                                 className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
+                                disabled={isWaitingForBackend}
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={async () => {
-                                    if (selectedDice.length === 0) return;
-                                    setIsRolling(true);
-
-                                    // แอนิเมชั่นการทอย
-                                    for (let i = 0; i < 10; i++) {
-                                        const tempResults = selectedDice.map(diceIndex => ({
-                                            type: selectedCard.type,
-                                            roll: Math.floor(Math.random() * 6) + 1,
-                                            diceIndex
-                                        }));
-                                        setDiceResults(tempResults);
-                                        await new Promise(r => setTimeout(r, 100));
-                                    }
-
-                                    // ผลลัพธ์สุดท้าย
-                                    const finalResults = selectedDice.map(diceIndex => ({
-                                        type: selectedCard.type,
-                                        roll: Math.floor(Math.random() * 6) + 1,
-                                        diceIndex
-                                    }));
-                                    setDiceResults(finalResults);
-                                    setIsRolling(false);
-                                    setHasRolled(true);
-                                }}
-                                disabled={selectedDice.length === 0}
+                                onClick={rollDice}
+                                disabled={selectedDice.length === 0 || isWaitingForBackend}
                                 className={`px-6 py-2 rounded-lg ${
-                                    selectedDice.length > 0
+                                    selectedDice.length > 0 && !isWaitingForBackend
                                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                         : 'bg-gray-600 text-gray-400'
                                 }`}
                             >
-                                Roll Dice
+                                {isWaitingForBackend ? 'Rolling...' : 'Roll Dice'}
                             </button>
                         </div>
                     )}
 
-                    {/* แสดงผลการทอย */}
+                    {/* Results display */}
                     {diceResults.length > 0 && (
-                        <div className="text-center">
+                        <div className="text-center text-white">
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 {diceResults.map((result) => (
                                     <div key={result.diceIndex} className="bg-gray-700 p-4 rounded-lg">
@@ -412,28 +449,19 @@ const Combat = ({ enemy, onCombatEnd, playerDeck, setPlayerDeck, diceCount }) =>
                                 ))}
                             </div>
                             <div className="border-t border-gray-600 pt-4 mt-4">
-                                {selectedCard?.type === 'fire' && (
-                                    <div className="text-xl text-red-400">
-                                        Total Damage: {diceResults.reduce((sum, result) => sum + result.roll, 0)}
-                                    </div>
-                                )}
-                                {selectedCard?.type === 'water' && (
-                                    <div className="text-xl text-blue-400">
-                                        Total Heal: {diceResults.reduce((sum, result) => sum + result.roll, 0)}
-                                    </div>
-                                )}
-                                {selectedCard?.type === 'earth' && (
-                                    <div className="text-xl text-green-400">
-                                        Total Barrier: {diceResults.reduce((sum, result) => sum + result.roll, 0)}
-                                    </div>
-                                )}
-                                {selectedCard?.type === 'wind' && (
-                                    <div className="text-xl text-purple-400">
-                                        Cards to Draw: {diceResults.reduce((sum, result) =>
-                                        sum + diceValues[result.type][result.roll - 1], 0
-                                    )}
-                                    </div>
-                                )}
+                                {/* Results summary based on card type */}
+                                <div className={`text-xl ${
+                                    selectedCard?.type === 'fire' ? 'text-red-400' :
+                                        selectedCard?.type === 'water' ? 'text-blue-400' :
+                                            selectedCard?.type === 'earth' ? 'text-green-400' :
+                                                'text-purple-400'
+                                }`}>
+                                    {selectedCard?.type === 'fire' && `Total Damage: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                    {selectedCard?.type === 'water' && `Total Heal: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                    {selectedCard?.type === 'earth' && `Total Barrier: ${diceResults.reduce((sum, result) => sum + result.roll, 0)}`}
+                                    {selectedCard?.type === 'wind' && `Cards to Draw: ${diceResults.reduce((sum, result) =>
+                                        sum + diceValues[result.type][result.roll - 1], 0)}`}
+                                </div>
                                 <button
                                     onClick={() => applyCardEffect(selectedCard, diceResults)}
                                     className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg mt-4"

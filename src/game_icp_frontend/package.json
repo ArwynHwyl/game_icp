@@ -27,14 +27,14 @@
     "vite-plugin-environment": "^1.1.3",
     "vitest": "^2.0.5"
   },
-  "name": "icp_project_frontend",
+  "name": "game_icp_frontend",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
     "prebuild": "dfx generate",
-    "setup": "npm i && dfx canister create icp_project_backend && dfx generate icp_project_backend && dfx deploy",
+    "setup": "npm i && dfx canister create game_icp_backend && dfx generate game_icp_backend && dfx deploy",
     "start": "vite --port 3000",
     "test": "vitest run",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/styles.css --watch"

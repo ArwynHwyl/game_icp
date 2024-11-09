@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import batSprite from './assets/32x32-bat-sprite.png';
 import stonebtn from './assets/brick2.png';
 import caveBackground from './assets/menubg.gif';
+import logo from './assets/LogoGame.png';
 import { Bell, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -137,7 +138,7 @@ const GameMenu = () => {
 
     const handleMenuClick = (item) => {
         switch(item) {
-            case 'PLAY !':
+            case 'PLAY!':
                 navigate('/Trail');
                 break;
             case 'OPTIONS':
@@ -174,7 +175,7 @@ const GameMenu = () => {
         return () => clearInterval(frameInterval);
     }, []);
 
-    const menuItems = ['PLAY !', 'OPTIONS', 'EXIT'];
+    const menuItems = ['PLAY!', 'OPTIONS', 'EXIT'];
 
     return (
         <div className="relative min-h-screen overflow-hidden">
@@ -211,32 +212,26 @@ const GameMenu = () => {
                         <div className="mb-16">
                             <div className="p-8"
                                  style={{
-                                     backgroundImage: `url(${stonebtn})`,
+
                                      backgroundSize: '100% 100%',
                                      backgroundRepeat: 'no-repeat',
                                      imageRendering: 'pixelated'
                                  }}>
                                 <div className="relative">
-                                    <h1 className="text-6xl font-['Press_Start_2P'] tracking-wider text-center"
+                                    <img
+                                        src={logo}
+                                        alt="CDICE"
+                                        className="w-64 h-auto"
                                         style={{
-                                            color: '#FFFFFF',
-                                            textShadow: `
-                                                -2px -2px 0 #6d4b2b,
-                                                2px -2px 0 #6d4b2b,
-                                                -2px 2px 0 #6d4b2b,
-                                                2px 2px 0 #6d4b2b,
-                                                0 3px 0 #4a3420`,
                                             imageRendering: 'pixelated',
                                             WebkitFontSmoothing: 'none',
                                             MozOsxFontSmoothing: 'none'
-                                        }}>
-                                        CDICE
-                                    </h1>
+                                        }}
+                                    />
 
                                     <div className="flex justify-center gap-3 mt-6">
                                         {[0, 1, 2, 3, 4].map((i) => (
-                                            <div key={i}
-                                                 className={`w-2 h-2 ${frame === 0 ? 'bg-white' : 'bg-[#6d4b2b]'}`} />
+                                            <div/>
                                         ))}
                                     </div>
                                 </div>

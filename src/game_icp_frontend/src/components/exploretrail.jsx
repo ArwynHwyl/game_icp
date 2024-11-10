@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Combat from './combat';
 import MerchantShop from "./combat/MerchantShop.jsx";
-
+import trailbg from"../assets/trailbg.png";
+import regularnodeImg from "../assets/regularnode.png";
+import merchantnodeImg from "../assets/merchantnode.png";
+import epicnodeImg from  "../assets/epicnode.png";
+import bossnodeImg from "../assets/bossnode.png";
+import eventcardnodeImg from "../assets/eventcardnode.png";
 const Trail = () => {
     const navigate = useNavigate();
     const [currentPosition, setCurrentPosition] = useState('start');
@@ -14,7 +19,7 @@ const Trail = () => {
     const [showRewardCard, setShowRewardCard] = useState({ show: false, card: null });
     const [availableNodes, setAvailableNodes] = useState([]);
 
-    const [gold, setGold] = useState(0);
+    const [gold, setGold] = useState(100);
     const [showMerchant, setShowMerchant] = useState(false);
 
     // เพิ่ม state สำหรับระบบการ์ดและลูกเต๋า
@@ -30,10 +35,10 @@ const Trail = () => {
     const initialCards = [
         { id: 1, type: 'fire', name: 'Fire Strike', description: 'Deal damage based on fire dice' },
         { id: 2, type: 'water', name: 'Healing Wave', description: 'Heal based on water dice' },
-        { id: 3, type: 'earth', name: 'Barrier Field', description: 'Reduce next damage by 5 per earth dice' },
+        { id: 3, type: 'earth', name: 'Force Field', description: 'Reduce next damage by 5 per earth dice' },
         { id: 4, type: 'wind', name: 'Gust Draw', description: 'Draw cards based on wind dice' },
-        { id: 5, type: 'fire', name: 'Flame Burst', description: 'Deal damage based on fire dice' },
-        { id: 6, type: 'water', name: 'Healing Spring', description: 'Heal based on water dice' },
+        { id: 5, type: 'fire', name: 'Fire Strike', description: 'Deal damage based on fire dice' },
+        { id: 6, type: 'water', name: 'Healing Wave', description: 'Heal based on water dice' },
         { id: 7, type: 'earth', name: 'Force Field', description: 'Reduce next damage by 5 per earth dice' },
     ];
 
@@ -46,10 +51,10 @@ const Trail = () => {
     const generateRewardCard = () => {
         const cardTypes = ['fire', 'water', 'earth', 'wind'];
         const cardNames = {
-            fire: ['Fire Strike', 'Flame Burst', 'Inferno', 'Blaze'],
-            water: ['Healing Wave', 'Healing Spring', 'Ocean Surge', 'Ice Shield'],
-            earth: ['Barrier Field', 'Force Field', 'Energy Shield', 'Power Guard'],
-            wind: ['Gust Draw', 'Wind Rush', 'Storm Call', 'Tempest']
+            fire: ['Fire Strike'],
+            water: ['Healing Wave'],
+            earth: ['Force Field'],
+            wind: ['Gust Draw']
         };
         const cardDescriptions = {
             fire: 'Deal damage based on fire dice',
@@ -130,8 +135,8 @@ const Trail = () => {
             position: { x: 150, y: 400 },
             next: ['n5'],
             type: 'combat',
-            description: 'Fight a random enemy',
-            enemy: enemies[Math.floor(Math.random() * enemies.length)]
+            description: 'Fight a regular enemy',
+            enemy: enemies[0]
         },
         n3: {
             position: { x: 200, y: 400 },
@@ -143,8 +148,8 @@ const Trail = () => {
             position: { x: 250, y: 400 },
             next: ['n7'],
             type: 'combat',
-            description: 'Fight a random enemy',
-            enemy: enemies[Math.floor(Math.random() * enemies.length)]
+            description: 'Fight a regular enemy',
+            enemy: enemies[0]
         },
         n5: {
             position: { x: 150, y: 350 },
@@ -156,8 +161,8 @@ const Trail = () => {
             position: { x: 200, y: 350 },
             next: ['n8'],
             type: 'combat',
-            description: 'Fight a random enemy',
-            enemy: enemies[Math.floor(Math.random() * enemies.length)]
+            description: 'Fight a regular enemy',
+            enemy: enemies[1]
         },
         n7: {
             position: { x: 250, y: 350 },
@@ -169,14 +174,15 @@ const Trail = () => {
             position: { x: 200, y: 300 },
             next: ['n9'],
             type: 'combat',
-            description: 'Fight a random enemy',
-            enemy: enemies[Math.floor(Math.random() * enemies.length)]
+            description: 'Fight a regular enemy',
+            enemy: enemies[1]
         },
         n9: {
             position: { x: 200, y: 250 },
             next: ['boss'],
-            type: 'event',
-            description: 'Draw a random card'
+            type: 'combat',
+            description: 'Fight an epic enemy',
+            enemy: enemies[2]  // Mushroom อยู่ที่ index 2 ใน array enemies
         },
         boss: {
             position: { x: 200, y: 200 },
@@ -301,37 +307,39 @@ const Trail = () => {
         return "#ccc";
     };
 
-    // แสดงข้อมูลลูกเต๋า
-    const DiceInfo = () => (
-        <div className="absolute bottom-20 left-4 bg-white p-4 rounded-lg shadow-lg">
-            <div className="font-bold mb-2">Dice Count:</div>
-            <div className="grid grid-cols-2 gap-2">
-                <div>🔥 Fire: {diceCount.fire}</div>
-                <div>💧 Water: {diceCount.water}</div>
-                <div>🪨 Earth: {diceCount.earth}</div>
-                <div>💨 Wind: {diceCount.wind}</div>
-            </div>
-        </div>
-    );
-
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="relative w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
+        <div
+            className="flex justify-center items-center min-h-screen bg-cover bg-center bg-no-repeat"
+            style={{
+                backgroundImage: `url(${trailbg})`,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                backgroundBlend: 'multiply'
+            }}
+        >
+            <div className="relative w-full max-w-2xl bg-gray-900/80 p-8 rounded-lg shadow-lg opacity-80">
                 {/* Player Status */}
-                <div className="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg">
+                <div className="absolute top-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg text-white">
                     <div className="mb-2">Explore trail!</div>
                     <div className="mb-2">{combatLog}</div>
                 </div>
 
                 {/* Gold Display & Node Info */}
-                <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg">
-                    <div className="text-yellow-600 font-bold">Gold: {gold}</div>
+                <div className="absolute top-4 right-4 bg-gray-800/90 p-4 rounded-lg shadow-lg text-white">
+                    <div className="text-yellow-400 font-bold">Gold: {gold}</div>
                     <div className="font-bold mb-2">{trailMap[currentPosition].type.toUpperCase()}</div>
                     <div>{trailMap[currentPosition].description}</div>
                 </div>
 
                 {/* Dice Info */}
-                <DiceInfo />
+                <div className="absolute bottom-20 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg text-white">
+                    <div className="font-bold mb-2">Dice Count:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>🔥 Fire: {diceCount.fire}</div>
+                        <div>💧 Water: {diceCount.water}</div>
+                        <div>🪨 Earth: {diceCount.earth}</div>
+                        <div>💨 Wind: {diceCount.wind}</div>
+                    </div>
+                </div>
 
                 <svg width="400" height="600" className="mx-auto">
                     {/* Draw paths */}
@@ -346,91 +354,126 @@ const Trail = () => {
                     )}
 
                     {/* Draw nodes */}
-                    {Object.entries(trailMap).map(([nodeId, node]) => (
-                        <g key={nodeId}>
-                            <circle
-                                cx={node.position.x}
-                                cy={node.position.y}
-                                r="15"
-                                fill={getNodeColor(nodeId, currentPosition === nodeId)}
-                                stroke={currentPosition === nodeId ? "#1976D2" : "none"}
-                                strokeWidth="3"
-                                className={
-                                    trailMap[currentPosition].next.includes(nodeId) && !visitedNodes.includes(nodeId)
+                    {Object.entries(trailMap).map(([nodeId, node]) => {
+                        const getNodeImage = () => {
+                            if (visitedNodes.includes(nodeId)) {
+                                return {
+                                    src: getNodeTypeImage(node.type, nodeId),
+                                    filter: 'grayscale(100%)',
+                                    opacity: 0.7
+                                };
+                            }
+                            return {
+                                src: getNodeTypeImage(node.type, nodeId),
+                            };
+                        };
+
+                        const getNodeTypeImage = (type, id) => {
+                            switch (type) {
+                                case 'combat':
+                                    return id === 'n9' ? epicnodeImg : regularnodeImg ;
+                                case 'merchant':
+                                    return merchantnodeImg;
+                                case 'boss':
+                                    return bossnodeImg;
+                                default:
+                                    return eventcardnodeImg;
+                            }
+                        };
+
+                        const nodeImage = getNodeImage();
+
+                        return (
+                            <g key={nodeId}>
+                                <image
+                                    href={nodeImage.src}
+                                    x={node.position.x - 15}
+                                    y={node.position.y - 15}
+                                    width="30"
+                                    height="30"
+                                    className={`
+                        ${currentPosition === nodeId ? 'ring-2 ring-blue-500' : ''}
+                        ${trailMap[currentPosition].next.includes(nodeId) && !visitedNodes.includes(nodeId)
                                         ? "cursor-pointer hover:opacity-80"
-                                        : "cursor-pointer"
-                                }
-                                onClick={() => handleNodeClick(nodeId)}
-                            />
-                            <text
-                                x={node.position.x}
-                                y={node.position.y + 5}
-                                textAnchor="middle"
-                                fill="white"
-                                fontSize="12"
-                            >
-                                {nodeId === 'start' ? 'S' : nodeId === 'boss' ? 'B' : '•'}
-                            </text>
-                        </g>
-                    ))}
+                                        : "cursor-pointer"}
+                    `}
+                                    style={{
+                                        filter: nodeImage.filter,
+                                        opacity: nodeImage.opacity,
+                                    }}
+                                    onClick={() => handleNodeClick(nodeId)}
+                                />
+                                <text
+                                    x={node.position.x}
+                                    y={node.position.y + 5}
+                                    textAnchor="middle"
+                                    fill="white"
+                                    fontSize="12"
+                                >
+                                    {nodeId === 'start' ? 'S' :''}
+                                </text>
+                            </g>
+                        );
+                    })}
                 </svg>
 
-            {/* Legend */}
-            <div className="mt-4 text-center">
-                <div className="flex justify-center gap-4">
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#2196F3] mr-2"></div>
-                        <span>Current</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#4CAF50] mr-2"></div>
-                        <span>Visited</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#87CEEB] mr-2"></div>
-                        <span>Event Card</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#FF4444] mr-2"></div>
-                        <span>Combat</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#FF0000] mr-2"></div>
-                        <span>Boss</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#FFD700] mr-2"></div>
-                        <span>Merchant</span>
+                {/* Legend */}
+                <div className="mt-4 text-center text-white">
+                    <div className="flex justify-center gap-4">
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#2196F3] mr-2"></div>
+                            <span>Current</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#4CAF50] mr-2"></div>
+                            <span>Visited</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#87CEEB] mr-2"></div>
+                            <span>Event Card</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#FF4444] mr-2"></div>
+                            <span>Combat</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#FF0000] mr-2"></div>
+                            <span>Boss</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-[#FFD700] mr-2"></div>
+                            <span>Merchant</span>
+                        </div>
                     </div>
                 </div>
+
+                {/* Show Reward Card */}
+                {showRewardCard.show && <RewardCardDisplay card={showRewardCard.card}/>}
+
+                {/* Combat Overlay */}
+                {showCombat && (
+                    <Combat
+                        enemy={currentEnemy}
+                        onCombatEnd={handleCombatEnd}
+                        playerDeck={playerDeck}
+                        setPlayerDeck={setPlayerDeck}
+                        diceCount={diceCount}
+                    />
+                )}
+
+                {/* Merchant Shop */}
+                {showMerchant && (
+                    <MerchantShop
+                        gold={gold}
+                        setGold={setGold}
+                        setPlayerDeck={setPlayerDeck}
+                        onClose={() => setShowMerchant(false)}
+                    />
+                )}
             </div>
-
-            {/* Show Reward Card */}
-            {showRewardCard.show && <RewardCardDisplay card={showRewardCard.card} />}
-
-            {/* Combat Overlay */}
-            {showCombat && (
-            <Combat
-                enemy={currentEnemy}
-                onCombatEnd={handleCombatEnd}
-                playerDeck={playerDeck}
-                setPlayerDeck={setPlayerDeck}
-                diceCount={diceCount}
-            />
-            )}
-
-            {/* Merchant Shop */}
-            {showMerchant && (
-            <MerchantShop
-                gold={gold}
-                setGold={setGold}
-                setPlayerDeck={setPlayerDeck}
-                onClose={() => setShowMerchant(false)}
-            />
-            )}
         </div>
-</div>
-);
+    );
 };
+
 
 export default Trail;

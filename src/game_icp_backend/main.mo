@@ -44,7 +44,7 @@ actor {
         };
     };
 
-    public shared query(msg) func get_user_history(): async [Nat] {
+    public shared query(msg) func get_user_history_dice_point(): async [Nat] {
         let caller = msg.caller;
         switch (userHistory.get(caller)) {
             case (?buffer) {

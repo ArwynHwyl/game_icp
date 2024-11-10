@@ -2,31 +2,57 @@ import Nat "mo:base/Nat";
 import Random "mo:base/Random";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
+import Principal "mo:base/Principal";
+import HashMap "mo:base/HashMap";
+import Array "mo:base/Array";
 import ManagementCanister "ic:aaaaa-aa";
 
-
 actor {
-  var random_history = Buffer.Buffer<Nat>(0);
-  public func random_number() : async Text {
+    // Store dice roll history per user
+    private var userHistory = HashMap.HashMap<Principal, Buffer.Buffer<Nat>>(0, Principal.equal, Principal.hash);
 
-    let randomBlob = await ManagementCanister.raw_rand();
+    public shared(msg) func random_number() : async Text {
+        let caller = msg.caller;
 
-    let finite = Random.Finite(randomBlob);
+        // Create history buffer for new users
+        switch (userHistory.get(caller)) {
+            case null {
+                userHistory.put(caller, Buffer.Buffer<Nat>(0));
+            };
+            case _ {};
+        };
 
-    let maybeNullrandomNumber = finite.range(4);
+        let randomBlob = await ManagementCanister.raw_rand();
+        let finite = Random.Finite(randomBlob);
 
-    switch (maybeNullrandomNumber) {
-      case null return "";
-      case (?randomNumber) {
-        let rdn:Nat = (randomNumber % 6) + 1;
-        random_history.add(rdn);
-        return debug_show (rdn);
-      };
+        switch (finite.range(4)) {
+            case null return "";
+            case (?randomNumber) {
+                let rdn: Nat = (randomNumber % 6) + 1;
 
+                // Add to user's history
+                switch (userHistory.get(caller)) {
+                    case (?buffer) {
+                        buffer.add(rdn);
+                        userHistory.put(caller, buffer);
+                    };
+                    case null {};
+                };
+
+                return debug_show(rdn);
+            };
+        };
     };
-  };
 
-  public query func get_random_history(): async [Nat]{
-    Buffer.toArray(random_history);
-  };
+    public shared query(msg) func get_user_history(): async [Nat] {
+        let caller = msg.caller;
+        switch (userHistory.get(caller)) {
+            case (?buffer) {
+                Buffer.toArray(buffer);
+            };
+            case null {
+                [];
+            };
+        };
+    };
 };

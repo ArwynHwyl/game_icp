@@ -18,6 +18,9 @@
     "src/game_icp_frontend"
   ],
   "dependencies": {
+    "@dfinity/agent": "^2.1.3",
+    "@dfinity/auth-client": "^2.1.3",
+    "@dfinity/principal": "^2.1.3",
     "lucide-react": "^0.454.0",
     "react-router-dom": "^6.28.0",
     "recharts": "^2.13.3"

@@ -5,11 +5,39 @@ import caveBackground from './assets/menubg.gif';
 import logo from './assets/LogoGame.png';
 import { Bell, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AuthClient } from '@dfinity/auth-client';
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const handleConnectWallet = () => {
-        navigate('/login');
+
+    const handleLogout = async () => {
+        try {
+            // สร้าง auth client ใหม่
+            const authClient = await AuthClient.create();
+
+            // ทำการ logout
+            await authClient.logout();
+
+            // ลบ cookies ทั้งหมด
+            document.cookie.split(";").forEach(function(c) {
+                document.cookie = c.replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+
+            // ลบข้อมูลใน localStorage
+            localStorage.clear();
+
+            // ลบข้อมูลใน sessionStorage
+            sessionStorage.clear();
+
+            // redirect ไปหน้า login
+            navigate('/login', { replace: true });
+
+            // รีโหลดหน้าเพื่อให้แน่ใจว่าล้างข้อมูลทั้งหมดแล้ว
+            window.location.reload();
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
@@ -27,14 +55,17 @@ const Navbar = () => {
                 <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
                     <Settings size={20} />
                 </button>
-                <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        onClick={handleConnectWallet}>
-                    Login
+                <button
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    onClick={handleLogout}
+                >
+                    Logout
                 </button>
             </div>
         </nav>
     );
 };
+
 
 const StoneButton = ({ children, onClick }) => {
     const [isHovered, setIsHovered] = useState(false);

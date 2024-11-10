@@ -23,7 +23,7 @@ const Trail = () => {
     // เพิ่ม state สำหรับระบบการ์ดและลูกเต๋า
     const [playerDeck, setPlayerDeck] = useState([]);
     const [diceCount, setDiceCount] = useState({
-        fire: 3,
+        fire: 1,
         water: 1,
         earth: 1,
         wind: 1

@@ -290,22 +290,6 @@ const Trail = () => {
         );
     };
 
-    // สีตามประเภทโหนด
-    const getNodeColor = (nodeId, isCurrentNode) => {
-        if (isCurrentNode) return "#2196F3";
-        if (visitedNodes.includes(nodeId)) return "#4CAF50";
-        if (trailMap[currentPosition].next.includes(nodeId)) {
-            const node = trailMap[nodeId];
-            switch (node.type) {
-                case 'combat': return "#FF4444";
-                case 'event': return "#87CEEB";
-                case 'merchant': return "#FFD700"; // สีทองสำหรับร้านค้า
-                case 'boss': return "#FF0000";
-                default: return "#FFC107";
-            }
-        }
-        return "#ccc";
-    };
 
     return (
         <div
@@ -421,58 +405,79 @@ const Trail = () => {
                 <div className="mt-4 text-center text-white">
                     <div className="flex justify-center gap-4">
                         <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#2196F3] mr-2"></div>
-                            <span>Current</span>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#4CAF50] mr-2"></div>
+                            <div className="w-1 h-4 line-clamp-1 bg-[#4CAF50] mr-2"></div>
                             <span>Visited</span>
                         </div>
                         <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#87CEEB] mr-2"></div>
+                            <img
+                                src={eventcardnodeImg}
+                                alt="Event Card"
+                                className="w-4 h-4 mr-2"
+                            />
                             <span>Event Card</span>
                         </div>
                         <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#FF4444] mr-2"></div>
-                            <span>Combat</span>
+                            <img
+                                src={regularnodeImg}
+                                alt="Regular Enemy"
+                                className="w-4 h-4 mr-2"
+                            />
+                            <span>Regular Enemy</span>
                         </div>
                         <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#FF0000] mr-2"></div>
+                            <img
+                                src={epicnodeImg}
+                                alt="Epic Enemy"
+                                className="w-4 h-4 mr-2"
+                            />
+                            <span>Epic Enemy</span>
+                        </div>
+                        <div className="flex items-center">
+                            <img
+                                src={bossnodeImg}
+                                alt="Boss"
+                                className="w-4 h-4 mr-2"
+                            />
                             <span>Boss</span>
                         </div>
                         <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full bg-[#FFD700] mr-2"></div>
+                            <img
+                                src={merchantnodeImg}
+                                alt="Merchant"
+                                className="w-4 h-4 mr-2"
+                            />
                             <span>Merchant</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Show Reward Card */}
-                {showRewardCard.show && <RewardCardDisplay card={showRewardCard.card}/>}
+            {/* Show Reward Card */}
+            {showRewardCard.show && <RewardCardDisplay card={showRewardCard.card}/>}
 
-                {/* Combat Overlay */}
-                {showCombat && (
-                    <Combat
-                        enemy={currentEnemy}
-                        onCombatEnd={handleCombatEnd}
-                        playerDeck={playerDeck}
-                        setPlayerDeck={setPlayerDeck}
-                        diceCount={diceCount}
-                    />
-                )}
+            {/* Combat Overlay */}
+            {showCombat && (
+                <Combat
+                    enemy={currentEnemy}
+                    onCombatEnd={handleCombatEnd}
+                    playerDeck={playerDeck}
+                    setPlayerDeck={setPlayerDeck}
+                    diceCount={diceCount}
+                />
+            )}
 
-                {/* Merchant Shop */}
-                {showMerchant && (
-                    <MerchantShop
-                        gold={gold}
-                        setGold={setGold}
-                        setPlayerDeck={setPlayerDeck}
-                        onClose={() => setShowMerchant(false)}
-                    />
-                )}
-            </div>
+            {/* Merchant Shop */}
+            {showMerchant && (
+                <MerchantShop
+                    gold={gold}
+                    setGold={setGold}
+                    setPlayerDeck={setPlayerDeck}
+                    onClose={() => setShowMerchant(false)}
+                />
+            )}
         </div>
-    );
+</div>
+)
+    ;
 };
 
 

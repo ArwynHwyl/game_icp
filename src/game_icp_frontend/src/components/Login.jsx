@@ -29,21 +29,12 @@ const Login = () => {
         }
     };
 
-    const handleBack = () => {
-        navigate('/', { replace: true });
-    };
 
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 flex items-center justify-center">
             <div className="bg-white rounded-xl p-8 shadow-xl max-w-md w-full mx-4 relative">
-                <button
-                    onClick={handleBack}
-                    className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
-                >
-                    <span>←</span>
-                    <span>Back</span>
-                </button>
+
 
                 <div className="text-center mb-8">
                     <div className="bg-blue-100 p-3 rounded-full inline-flex mb-4">

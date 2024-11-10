@@ -12,12 +12,10 @@ const Trail = () => {
     const navigate = useNavigate();
     const [currentPosition, setCurrentPosition] = useState('start');
     const [visitedNodes, setVisitedNodes] = useState(['start']);
-    const [playerHealth, setPlayerHealth] = useState(20);
     const [combatLog, setCombatLog] = useState('');
     const [showCombat, setShowCombat] = useState(false);
     const [currentEnemy, setCurrentEnemy] = useState(null);
     const [showRewardCard, setShowRewardCard] = useState({ show: false, card: null });
-    const [availableNodes, setAvailableNodes] = useState([]);
 
     const [gold, setGold] = useState(100);
     const [showMerchant, setShowMerchant] = useState(false);
@@ -223,27 +221,53 @@ const Trail = () => {
     // จัดการเมื่อจบ Combat
     const handleCombatEnd = (result) => {
         setShowCombat(false);
+
+        // เช็คว่าเป็นการต่อสู้กับบอสหรือไม่
+        const isBossFight = currentEnemy.name === "Boss";
+
         if (result.result === 'victory') {
             // คำนวณทองที่ได้จากการฆ่ามอน
-            const goldEarned = Math.floor(currentEnemy.health * 0.5); // ทองที่ได้ = เลือดมอน/2
+            const goldEarned = Math.floor(currentEnemy.health * 0.5);
             const rewardCard = generateRewardCard();
 
             setGold(prev => prev + goldEarned);
             setCombatLog(`Victory! Earned ${goldEarned} gold! Received ${rewardCard.name}`);
             setPlayerDeck(prevDeck => [...prevDeck, rewardCard]);
-            setShowRewardCard({
-                show: true,
-                card: rewardCard
-            });
 
-            setTimeout(() => {
+            if (isBossFight) {
+                // ถ้าชนะบอส รอให้แสดงการ์ดรางวังเสร็จแล้วค่อยกลับไปหน้า menu
                 setShowRewardCard({
-                    show: false,
-                    card: null
+                    show: true,
+                    card: rewardCard
                 });
-            }, 3000);
+
+                setTimeout(() => {
+                    setShowRewardCard({
+                        show: false,
+                        card: null
+                    });
+                    // หลังจากแสดงการ์ดรางวัง 3 วินาที ให้กลับไปหน้า menu
+                    setTimeout(() => {
+                        navigate('/', { replace: true });
+                    }, 500);
+                }, 3000);
+            } else {
+                // ถ้าไม่ใช่บอส แสดงการ์ดรางวังตามปกติ
+                setShowRewardCard({
+                    show: true,
+                    card: rewardCard
+                });
+
+                setTimeout(() => {
+                    setShowRewardCard({
+                        show: false,
+                        card: null
+                    });
+                }, 3000);
+            }
         } else {
-            navigate('/');
+            // ถ้าแพ้ให้กลับไปหน้า menu ทันที
+            navigate('/', { replace: true });
         }
     };
 
